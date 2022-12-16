@@ -1,0 +1,65 @@
+#!/usr/bin/zsh
+
+# see the 'zle builtins' section of zshzle(1).
+
+bindkey -v # enable vi-mode
+export KEYTIMEOUT=1 # speed up switching between vi modes
+
+# edit the current line with $VISUAL or $EDITOR
+autoload edit-command-line; zle -N edit-command-line
+bindkey '^e' edit-command-line # edit line in vi with <ctrl-e>
+
+# navigate the tab complete menu using vi bindings
+bindkey -M menuselect 'h' vi-backward-char
+bindkey -M menuselect 'k' vi-up-line-or-history
+bindkey -M menuselect 'l' vi-forward-char
+bindkey -M menuselect 'j' vi-down-line-or-history
+# bindkey -M menuselect '^[[Z' vi-up-line-or-history
+
+# detect switches between command (vicmd) and insert (viins or main) modes
+function zle-keymap-select() {
+  case $KEYMAP in
+    vicmd) printf '\e[1 q';; # use block for command mode
+    viins|main) printf '\e[5 q';; # use beam for insert mode
+  esac
+
+  # allow characters to be deleted after switching modes
+  bindkey -v '^?' backward-delete-char
+}
+zle -N zle-keymap-select
+
+# see the 'special widgets' section of zshzle(1)
+function zle-line-init() {
+  zle -K viins
+}
+zle -N zle-line-init
+
+# use the shared system clipboard ('xsel -b') in zsh vi mode
+function {
+  function _use_shared_clipboard() {
+    local SELECT='xsel -b'
+    for widget in "$@"; do
+      if [[ "$1" == 'copy' ]]; then
+        eval "_clipboard_$widget() { zle .$widget; $SELECT -i <<<\$CUTBUFFER }"
+      else
+        eval "_clipboard_$widget() { CUTBUFFER=\$($SELECT -o); zle .$widget }"
+      fi
+      zle -N $widget _clipboard_$widget
+    done
+  }
+
+  local paste_widgets=(
+    vi-put-{before,after}
+  )
+
+  local copy_widgets=(
+    vi-yank
+    vi-yank-eol
+    vi-delete
+    vi-backward-kill-word
+    vi-change-whole-line
+  )
+
+  _use_shared_clipboard copy $copy_widgets
+  _use_shared_clipboard paste $paste_widgets
+}

@@ -1,0 +1,61 @@
+#!/usr/bin/zsh
+# A script to make using 256 colors in zsh less painful.
+# Original by sykora (https://github.com/sykora/etc/blob/master/zsh/functions/spectrum).
+
+# typeset -AHg FX FG BG
+#
+# FX=(
+#   reset     "%{[00m%}"
+#   bold      "%{[01m%}" no-bold      "%{[22m%}"
+#   italic    "%{[03m%}" no-italic    "%{[23m%}"
+#   underline "%{[04m%}" no-underline "%{[24m%}"
+#   blink     "%{[05m%}" no-blink     "%{[25m%}"
+#   reverse   "%{[07m%}" no-reverse   "%{[27m%}"
+# )
+#
+# for color in {000..255}; do
+#   FG[$color]="%{[38;5;${color}m%}"
+#   BG[$color]="%{[48;5;${color}m%}"
+# done
+
+# A function to print all 256 8-bit colors and their code on the terminal.
+# function spectrum() {
+#  _print_4bit_colors
+#  for code in {16..51..18}; do
+#    _print_color_cluster "$code"
+#    print '' # handles spacing in between clusters
+#  done
+#  _print_8bit_grayscale
+# }
+
+## A helper function that prints a 6x18 color cluster.
+## Arguments:
+##   $1 - the starting color code for the cluster
+# function _print_color_cluster() {
+#  local code=$1
+#  for row in {1..6}; do
+#    for col in {1..18}; do
+#      print -P -- "%K{$code}   %k $(printf '%3d' $code) \c"
+#      (( code++ ))
+#    done
+#    [[ $code -lt 231 ]] && print '\n' # handles spacing in between rows
+#    (( code += 18 )) # next row should start at 52, hence (52 - 16 - 18) = 18
+#  done
+# }
+
+## A helper function that prints all 16 4-bit colors.
+# function _print_4bit_colors() {
+#  for code in {0..15}; do
+#    print -P -- "$(printf '%3d' $code) %K{$code}   %k \c"
+#  done
+#  print '\n\n'
+# }
+
+## A helper function that prints all 24 8-bit grayscale colors.
+# function _print_8bit_grayscale() {
+#  for code in {232..255}; do
+#    (( ($code - 232) % 12 == 0 )) && print '\n' # seperate into rows of 12 elements
+#    print -P -- "$(printf '%3d' $code) %K{$code}    %k \c"
+#  done
+#  print ''
+# }

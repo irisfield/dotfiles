@@ -1,0 +1,30 @@
+# Use as reference and consider switching to yt-dlp (better youtube-dl)
+# https://github.com/TheFrenchGhosty/TheFrenchGhostys-Ultimate-YouTube-DL-Scripts-Collection
+
+# Always extract audio
+#-x
+
+--verbose
+
+# Embed the subtitle(s) file to the video file
+--embed-subs
+
+# Bypass geographic restriction via faking X-Forwarded-For HTTP header
+--geo-bypass
+
+# Write subtitle file
+--write-sub
+#
+# Subtitle format, accepts formats preference, for example: srt, ass, best
+--sub-format 'best'
+
+# Languages of the subtitles to download (optional) separated by commas, use --list-subs for available language tags
+--sub-lang 'ja,jp,jpn,en,eng'
+
+# Download best format available but no better than 1440p (QHD)
+--format 'bestvideo[height<=1440][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+
+# Save all videos under vid directory in your home directory
+--output '~/vid/%(uploader)s[%(channel_id)s]/%(title)s[%(id)s].%(ext)s'
+
+--merge-output-format 'mkv'

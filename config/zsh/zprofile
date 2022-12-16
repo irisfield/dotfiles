@@ -1,0 +1,41 @@
+#!/usr/bin/sh
+
+# export LS_COLORS=$(vivid generate one-dark)
+([ -f "$HOME"/.config/ls/ls_colors ] && source "$HOME/.config/ls/ls_colors") ||
+  ("$HOME"/.config/ls/compile && source "$HOME/.config/ls/ls_colors")
+
+
+# load lf icons
+[ -f "$XDG_CONFIG_HOME/lf/icons" ] &&
+  LF_ICONS="$(tr '\n' ':' < "$HOME"/.config/lf/icons)" && export LF_ICONS
+
+# source fzf completions and key bindings (ctrl-t, ctrl-r, alt-c)
+[ -d /usr/share/fzf ] && for c in /usr/share/fzf/*.zsh;
+  do [ -f "$c" ] && source "$c"; done
+
+# allows lf to change directory on quit
+lfcd () {
+  tmp="$(mktemp)"
+  lfub -last-dir-path="$tmp" "$@"
+  if [ -f "$tmp" ]; then
+    dir="$(command cat "$tmp")"
+    rm -f "$tmp" >/dev/null
+    [ "$dir" != "$(pwd)" ] && cd "$dir"
+  fi
+}
+
+# bind lf to <C-o>
+bindkey -s '^o' '^ulf\n' # '^u' clears the current line in the terminal
+
+spectrum_ls() {
+  # print all 256 8-bit colors
+  for code in $(seq -w 0 255); do
+    print -P -- "$code: %F{$code}%BNyanpasu%b%f %K{$code}        %k"
+  done
+}
+
+# https://image2ascii.com/
+
+# Lines below an exec command are ignored. exec is necessary because without it any user could kill X.
+# However, to remain logged in after ending the X session, startx without calling exec.
+[ -z "$DISPLAY" ] && [ -n "$(command -v xinit)" ] && exec startx

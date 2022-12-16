@@ -1,0 +1,13 @@
+# TYPE indicates whether the entry is a file or directory (FD).
+# PATH is the location to the file or directory.
+# DEST is the destination of the symbolic link.
+# NAME is the name to give to the symbolic link.
+# TYPE,PATH,DEST,NAME
+D,config/bat,~/.config,bat
+D,config/git,~/.config,git
+D,config/mpv,~/.config,mpv
+D,config/zsh,~/.config,zsh
+D,config/nvim,~/.config,nvim
+D,config/fcitx5,~/.config,fcitx5
+D,config/zathura,~/.config,zathura
+D,config/keepassxc,~/.config,keepassxc

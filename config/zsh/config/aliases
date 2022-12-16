@@ -1,0 +1,38 @@
+#!/usr/bin/sh
+
+# shellcheck disable=2139
+for util in dmesg mount umount reboot shutdown; do
+    alias "$util"="doas $util" # same commannds as in /etc/doas.conf
+done
+
+alias lf='lfcd'
+alias xd='cd "$(xplr --print-pwd-as-result)"'
+alias py='python3'
+alias za='zathura'
+alias vi='nvim'
+alias yt='youtube-dl --add-metadata -i'
+alias cat='bat --paging=never --style="changes"'
+alias poof='paru -Rns'
+alias zbarimg='zbarimg -q --raw'
+alias dd='dd status=progress'
+
+alias ...='../..'
+alias mv='mv -iv'
+alias rm='rm -iv'
+alias cp='cp -iv'
+alias mkd='mkdir -pv'
+alias less='less --ignore-case --tilde'
+
+alias diff='diff --color=auto'
+alias grep='grep --color=auto'
+alias ls='ls -Nhx --color=auto --group-directories-first'
+alias exa='exa -xhrs type --icons --group-directories-first --time-style iso'
+
+alias df='df -h'
+alias ka='killall'
+alias mimetype='file -b --mime-type'
+
+alias zr='$EDITOR $XDG_CONFIG_HOME/zsh/zshrc'
+alias zs='$EDITOR $XDG_CONFIG_HOME/zsh/zshenv'
+alias zp='$EDITOR $XDG_CONFIG_HOME/zsh/zprofile'
+alias jn='cd ~/task/notebook && jupyter notebook'

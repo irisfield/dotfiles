@@ -1,0 +1,57 @@
+#!/usr/bin/env sh
+
+# xinitrc is typically used to start window managers or desktop environments.
+# Similarly to xprofile, it allows the user to excute commands at the
+# beginning of the x user session - before the wm or de is started.
+# Display managers generally source xprofile, as opposed to xinitrc.
+# startx script is a front-end to xinit, and will run commands from xinitrc.
+
+# when connected, output to HDMI-1 as well
+xrandr --output HDMI-1 --mode 1920x1080 --rate 60 &
+
+# rate <delay> <rate>
+xset r rate 290 50 &
+
+# prevents laptop screen from dimming
+xset -dpms &
+
+# disable the laptop's trackpad
+# xinput set-prop "SynPS/2 Synaptics TouchPad" "Device Enabled" 0 &
+
+# poof the cursor when idle for 2 second
+unclutter --timeout 15 --jitter 10 &
+
+# make ALT_R a compose key
+setxkbmap -option compose:ralt &
+
+#  lightweight compositor for X11
+picom --experimental-backends &
+
+# start pulseaudio as a service
+pulseaudio --start &
+
+# input method framework
+fcitx5 -d &
+
+# screenshot software
+flameshot &
+
+# file synchronization tool
+syncthing -no-browser &
+
+# set color temperature of display according to time of day
+redshift -c ~/.config/redshift/redshift.conf &
+
+# torrent software
+qbittorrent &
+
+# status bar
+while true; do
+  xsetroot -name "$(date +"%x %A %X %Z")"
+  sleep 1s  # update status every X seconds
+done &
+
+# allow dwm to be initialized by startx; startx cannot be called from this file
+exec dwm
+
+# note that lines below an exec command are ignored

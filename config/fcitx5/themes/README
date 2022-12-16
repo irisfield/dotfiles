@@ -1,0 +1,19 @@
+# All the themes are locally stored in $HOME/.config/fcitx5/themes
+# costumize them to your preference
+
+### Apply a theme to fcitx5
+
+# Copy the theme directory to /usr/share/fcitx5
+cp -rv ~/.config/fcitx5/themes/<dir_name> /usr/share/fcitx5/themes
+# or preferably, create a symlink to it
+ln -s ~/.config/fcitx5/themes/<dir_name> /usr/share/fcitx5/themes
+
+# Launch fcitx5-config-qt
+# Nagivate to Addons -> Classic User Interface
+# Click on "Configure"
+
+### Costumize an existing theme
+
+# Nagivate to the theme directory
+# Open the theme.conf file in $EDITOR
+# You can figure it out from here.

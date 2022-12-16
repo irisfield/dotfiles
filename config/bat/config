@@ -1,0 +1,13 @@
+--wrap=never
+--theme="TwoDark"
+--force-colorization
+--italic-text=always
+
+# styles: bat --help
+--style="changes,header-filesize,grid,snip"
+
+# syntax mappings: map a certain filename pattern to a language
+# i.e. use c++ syntax for Arduino .ino files
+#--map-syntax "*.ino:C++"
+
+# vim: ft=conf

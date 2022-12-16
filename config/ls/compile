@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# $LS_COLORS is used by `ls --color=auto`.
+# Configure the colors in the `ls_colors.conf` file and then run this script.
+# Lastly, source the generated file from zprofile to enable the colors.
+
+printf '%s\n' "#!/bin/sh" "# This file is overwritten by compile." > "$XDG_CONFIG_HOME/ls/ls_colors"
+dircolors -b "$XDG_CONFIG_HOME/ls/ls_colors.conf" >> "$XDG_CONFIG_HOME/ls/ls_colors"

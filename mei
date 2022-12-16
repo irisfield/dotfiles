@@ -1,0 +1,220 @@
+#!/usr/bin/env sh
+
+# The Symbolic Link Manager, Mei
+
+# https://en.wikipedia.org/wiki/ANSI_escape_code
+# shellcheck disable=2088 # this is intentional
+
+### HELPERS ###
+
+get_meido() {
+  if [ -f "./mei.do.csv" ]; then
+    trap 'rm -f /tmp/mei.do.csv' EXIT HUP INT QUIT TERM
+    # extract all the valid entries from the file
+    grep '^[DF],[^,]\+,[^,]\+,[^,]\+$' mei.do.csv > /tmp/mei.do.csv
+    # remove any inline '#' comments
+    sed -i "s/\s*#[^\"']*$//" /tmp/mei.do.csv
+  else
+    printf '%b\n' "This directory does not have a \033[37mmei.do.csv\033[0m file!"
+    exit 1
+  fi
+}
+
+get_path() {
+  path=$(gum input --prompt.foreground 99 --prompt.bold \
+  --prompt "Path: $(printf '%b' "\033[22m$PWD/")" \
+  --placeholder "(file or directory to track)")
+  while [ ! -f "$PWD/$path" ] && [ ! -d "$PWD/$path" ] || [ -z "$path" ]; do
+    path=$(gum input --prompt.foreground 99 --prompt.bold \
+    --prompt "Try again. Path: $(printf '%b' "\033[22m$PWD/")" \
+    --placeholder "(enter a valid file or directory)")
+  done
+}
+
+get_dest() {
+  dest=$(gum input --prompt.foreground 99 --prompt.bold \
+  --prompt "Destination: $(printf '%b' "\033[22m$HOME/")" \
+  --placeholder "(destination of the symbolic link)")
+  while [ ! -d "$HOME/$dest" ] || [ -z "$dest" ]; do
+    dest=$(gum input --prompt.foreground 99 --prompt.bold \
+    --prompt "Try again. Destination: $(printf '%b' "\033[22m$HOME/")" \
+    --placeholder "(enter a valid directory, e.g.: .config)")
+  done && dest="~/$dest"
+}
+
+get_name() {
+  name=$(gum input --prompt.foreground 99 --prompt.bold \
+  --prompt "Symlink Name: $(printf '%b' "\033[22m$HOME/${dest#*/}/")" \
+  --placeholder "${path##*/} (or enter a name)")
+  [ -z "$name" ] && name=${path##*/}
+}
+
+### SUB COMMANDS ###
+
+add() {
+  if [ ! -f "./mei.do.csv" ]; then
+    gum confirm --prompt.foreground 99 --prompt.border-foreground 105 --prompt.width 60 \
+      --prompt.margin "1 2" --prompt.padding "1 2" --prompt.border thick \
+      --prompt.align center --default "$(printf '%b\n' "\033[34;1mMeido File\033[0m")
+Please make sure this is the directory where you keep your dotfiles. In that case, would \
+you like to create: $(printf '%b' "\033[32m$PWD/mei.do.csv\033[35m")" || exit 1
+
+    echo "# TYPE indicates whether the entry is a file or directory (FD).
+# PATH is the location to the file or directory.
+# DEST is the destination of the symbolic link.
+# NAME is the name to give to the symbolic link.
+# TYPE,PATH,DEST,NAME" > mei.do.csv
+  fi
+
+  get_path # the path of the file or directory to track
+  get_dest # the destination of the symbolic link
+  get_name # the name to use for the symbolic link
+
+  # prompt the user before adding the entry to the meido file
+  gum confirm --prompt.foreground 99 --prompt.border-foreground 105 \
+    --prompt.margin "1 2" --prompt.padding "1 2" --prompt.border thick \
+    --prompt.align center --affirmative "Add" --negative "Exit" \
+    --default "$(gum style --bold --foreground 116 "Entry Overview")
+The following entry will be added:
+$(printf '%b' "\033[32m$PWD/$path → \033[33m$HOME/${dest#*/}/$name\033[0m")" || exit 1
+
+  # check for duplicate entries and if not, append the entry to the meido file
+  if grep -q "^[DF],$path,$dest,$name$" < mei.do.csv; then
+    printf '%b' "\033[32m$PWD/$path → " &&
+      printf '%b\n' "\033[33m$HOME/${dest#*/}/$name\033[0m -- already added!"
+  elif [ -f "$PWD/$path" ]; then
+    # sed -i "s/^F,.*,.*$/&\nF,$path,$dest/;tl;b;:l;{n;bl}" mei.do.csv
+    echo "F,$path,$dest,$name" >> mei.do.csv &&
+      printf '%b\n' "added: \033[32m$PWD/$path → \033[33m$HOME/${dest#*/}/$name\033[0m"
+  elif [ -d "$PWD/$path" ]; then
+    echo "D,$path,$dest,$name" >> mei.do.csv &&
+      printf '%b\n' "added: \033[32m$PWD/$path → \033[33m$HOME/${dest#*/}/$name\033[0m"
+  else
+    printf '%b\n' "Entry could not be added, \033[31m$PWD/$path\033[0m does not exist."
+  fi && unset path dest name
+}
+
+remove() {
+  get_meido
+
+  # make sure the file is not empty or else gum filter breaks
+  [ "$(wc -l < /tmp/mei.do.csv)" -eq 0 ] &&
+    printf '%b\n' "No entries to remove, \033[37mmei.do.csv\033[0m is empty!" &&
+    exit 1
+
+  # select entries to remove from the meido file
+  entries=$(gum filter --prompt.bold --prompt.foreground 99 --prompt "Remove: " \
+    --no-limit --placeholder "(tab select the entries to remove)" < /tmp/mei.do.csv)
+
+  # prompt the user before removing the entries
+  gum confirm --prompt.foreground 99 --prompt.border-foreground 105 \
+    --prompt.margin "1 2" --prompt.padding "1 2" --prompt.border thick \
+    --prompt.align center --affirmative "Remove" --negative "Exit" \
+    --default "$(gum style --bold --foreground 116 "Entry Overview")
+The following links will be removed from $(printf '%b' "\033[4mmei.do.csv\033[24m:")
+$(echo "$entries" | while IFS=, read -r type path dest name; do
+  printf '%b\n' "\033[32m$PWD/$path\033[0m → \033[33m$HOME/${dest#*/}/$name\033[0m"
+done)" || exit 1
+
+  # delete the selected entries
+  echo "$entries" | while IFS=, read -r type path dest name; do
+    sed -i "s|^$type,$path,$dest,$name.*|nyanpasu|;/^nyanpasu$/d" mei.do.csv &&
+      printf '%b\n' "removed: \033[32m$PWD/$path → \033[33m$HOME/${dest#*/}/$name\033[0m"
+  done
+}
+
+link() {
+  get_meido
+  # expand ~/ and relative paths
+  sed -i "s|[^DF]|,$PWD/|;s|,~/|,$HOME/|;" /tmp/mei.do.csv
+  # add color to the entries
+  while IFS=, read -r type path dest name; do
+    if [ ! -h "$dest/$name" ]; then
+      entries="\033[32m$path\033[0m → \033[33m$dest/$name\033[0m\n$entries\c"
+    fi
+  done < /tmp/mei.do.csv
+  # sort them by character count
+  entries=$(echo "$entries" | awk '{ print length(), $0 | "sort -n" }' | sed 's/[^ ]*.//')
+
+  # prompt the user before creating the symbolic links
+  gum confirm --prompt.foreground 99 --prompt.border-foreground 105 \
+    --prompt.margin "1 2" --prompt.padding "1 2" --prompt.border thick \
+    --prompt.align center --affirmative "Link" --negative "Exit" \
+    --default "$(gum style --bold --foreground 116 "Linking Overview")
+The following symbolic links will be attempted:
+$(gum style --align center -- "$(printf '%b\n' "$entries")")" || exit 1
+
+  # process the entries in the file
+  while IFS=, read -r type path dest name; do
+    case "$type" in
+      "D")
+        if [ ! -d "$path" ]; then
+          printf '%b\n' "\033[31m$path\033[0m does not exist -- skipping"
+        elif [ ! -d "$dest" ]; then
+          printf '%b\n' "\033[31m$dest\033[0m does not exist -- skipping"
+        elif [ ! -h "$dest/$name" ] && [ -d "$dest/$name" ]; then
+          printf '%b\n' "\033[31m$dest/$name\033[0m is a directory -- skipping"
+        elif [ -h "$dest/$name" ] && [ "$(readlink -f "$dest/$name")" = "$path" ]; then
+          # printf '%b\n' "link: \033[33m$dest/$name\033[0m is already set up -- skipping"
+          continue
+        else
+          ln -sf "$path" "$dest/$name" &&
+            printf '%b\n' "\033[32m$path\033[0m → \033[33m$dest/$name\033[0m"
+        fi
+      ;;
+      "F")
+        if [ ! -f "$path" ]; then
+          printf '%b\n' "\033[31m$path\033[0m does not exist -- skipping"
+        elif [ ! -d "$dest" ]; then
+          printf '%b\n' "\033[31m$dest\033[0m does not exist -- skipping"
+        elif [ ! -h "$dest/$name" ] && [ -f "$dest/$name" ]; then
+          printf '%b\n' "\033[31m$dest/$name\033[0m is a regular file -- skipping"
+        elif [ -h "$dest/$name" ] && [ "$(readlink -f "$dest/$name")" = "$path" ]; then
+          continue
+        else
+          ln -sf "$path" "$dest/$name" &&
+            printf '%b\n' "\033[32m$path\033[0m → \033[33m$dest/$name\033[0m"
+        fi
+      ;;
+    esac
+  done < /tmp/mei.do.csv
+}
+
+unlink() {
+  get_meido
+  # expand ~/ and relative paths
+  sed -i "s|[^DF]|,$PWD/|;s|,~/|,$HOME/|;" /tmp/mei.do.csv
+  # add color to the entries
+  while IFS=, read -r type path dest name; do
+    if [ -h "$dest/$name" ] && [ "$(readlink -f "$dest/$name")" = "$path" ]; then
+      entries="\033[33m$path\033[0m →✕ \033[31m$dest/$name\033[0m\n$entries\c"
+    fi
+  done < /tmp/mei.do.csv
+  # sort them by character count
+  entries=$(echo "$entries" | awk '{ print length(), $0 | "sort -n" }' | sed 's/[^ ]*.//')
+
+  # prompt the user before removing the symbolic links
+  gum confirm --prompt.foreground 99 --prompt.border-foreground 105 \
+    --prompt.margin "1 2" --prompt.padding "1 2" --prompt.border thick \
+    --prompt.align center --affirmative "Unlink" --negative "Exit" \
+    --default "$(gum style --bold --foreground 116 "Unlinking Overview")
+The following symbolic links will be removed:
+$(gum style --align center -- "$(printf '%b\n' "$entries")")" || exit 1
+
+  # process the entries in the file
+  while IFS=, read -r type path dest name; do
+    if [ -h "$dest/$name" ] && [ "$(readlink -f "$dest/$name")" = "$path" ]; then
+      rm -rf "${dest:?}/$name" &&
+        printf '%b\n' "\033[33m$path\033[0m →✕ \033[31m$dest/$name\033[0m"
+    fi
+  done < /tmp/mei.do.csv
+}
+
+### START ###
+
+case $(gum choose -- "link" "unlink" "add" "remove") in
+  link) link ;;
+  unlink) unlink ;;
+  add) add ;;
+  remove) remove;;
+esac

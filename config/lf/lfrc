@@ -1,0 +1,39 @@
+set icons
+set ifs "\n" # must be double quotations
+set ignorecase
+set scrolloff 10
+set shellopts '-eu'
+set cleaner '~/.config/lf/cleaner'
+set previewer '~/.config/lf/scope'
+
+# cmds/functions
+
+cmd open ${{
+  case $(file --mime-type "$(readlink -f $f)" -b) in
+    application/vnd.openxmlformats-officedocument.spreadsheetml.sheet) local $fx ;;
+    text/*|application/json|inode/x-empty) $EDITOR $fx ;;
+    image/x-xcf) setsid -f gimp $f >/dev/null 2>&1 ;;
+    image/svg+xml) display -- $f ;;
+    image/gif|video/webm|application/octet-stream) setsid -f mpv --loop-file --no-resume-playback $f >/dev/null 2>&1 ;;
+    image/*) setsid -f sxiv -a $f ;;
+    audio/*) setsid -f mpv --audio-display=no $f >/dev/null 2>&1 ;;
+    video/*) setsid -f mpv $f -quiet >/dev/null 2>&1 ;;
+    application/pdf|application/postscript|application/vnd*|application/epub*) setsid -f zathura $fx >/dev/null 2>&1 ;;
+    application/pgp-encrypted) $EDITOR $fx ;;
+    *) for f in $fx; do setsid -f $OPENER $f >/dev/null 2>&1; done ;;
+  esac
+}}
+
+# prompt to make a dir within lf
+cmd mkdir $mkdir -p "$(echo $* | tr ' ' '\ ')"
+
+# Bindings
+map gg top
+map gc cd '~/.config'
+map gl cd '~/.local'
+map D delete
+map E extract
+map <c-s> set hidden!
+map <enter> shell
+
+# vim: ft=conf

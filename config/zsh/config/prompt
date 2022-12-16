@@ -1,0 +1,50 @@
+#!/usr/bin/zsh
+
+# git:
+# %b => current branch name
+# %c => new files were tracked
+# %u => tracked files were modified or deleted
+
+# prompt:
+# %~ => current path
+# %* => time
+# %n => username
+# %m => short hostname
+# %1 => vcs branch and vcs
+# %2 => vcs dirty
+# %3 => vcs action
+# %4 => cmd execution time
+
+# nerd icons
+#  mdi-git f7a1
+#  git_branch e725
+# 燎source_fork f9c0
+# שּׁ source_merge fb2c
+# ﳺ vanish
+
+autoload -Uz vcs_info # '-U' marks the function for autoloading
+autoload -U colors && colors
+
+# hook that runs before every prompt
+precmd_vcs_info() { vcs_info }
+precmd_functions+=( precmd_vcs_info )
+setopt prompt_subst # enable substition in prompt
+
+zstyle ':vcs_info:*' enable git
+# zstyle ':vcs_info:*' get-revision true
+zstyle ':vcs_info:*' check-for-changes true
+zstyle ':vcs_info:*' stagedstr "%F{115}%B+%b%f" # new files were tracked
+zstyle ':vcs_info:*' unstagedstr "%F{161}%B-%b%f" # tracked files were modified or deleted
+zstyle ':vcs_info:*' untrackedstr
+zstyle ':vcs_info:git:*' formats " %F{63}(%m%b)%f%c%u"
+zstyle ':vcs_info:git*+set-message:*' hooks git-untracked
+# zstyle ':vcs_info:*' headbehindstr '⇣'
+# zstyle ':vcs_info:*' headaheadstr '⇡'
+
++vi-git-untracked() {
+  if echo "$(git status --porcelain 2>/dev/null)" | grep -q '??'; then
+    hook_com[unstaged]+="%F{70}%B±%b%f" # symbol for untracked files
+  fi
+}
+
+PROMPT='%F{108}%B%2~%b%f$vcs_info_msg_0_ 🦋 '

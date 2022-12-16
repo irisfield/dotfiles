@@ -1,0 +1,69 @@
+#!/usr/bin/zsh
+
+# This file is intended to set options and other configurations for the z shell.
+# References:
+# (https://grml.org/zsh/zsh-lovers.html)
+# (https://thevaluable.dev/zsh-completion-guide-examples)
+# (https://github.com/ChristianChiarulli/Machfiles/tree/master/zsh/.config/zsh)
+
+# preferred options [see zshoptions(1)]
+setopt AUTO_CD NOMATCH EXTENDED_GLOB INTERACTIVE_COMMENTS
+setopt INC_APPEND_HISTORY HIST_SAVE_NO_DUPS
+unsetopt BEEP
+
+stty stop undef # disable freezing the terminal with ctrl-s
+zle_highlight=('paste:none') # disable paste highlight
+
+# initialize
+autoload -Uz compinit
+autoload -U up-line-or-beginning-search; zle -N up-line-or-beginning-search
+autoload -U down-line-or-beginning-search; zle -N down-line-or-beginning-search
+
+zmodload zsh/complist
+_comp_options+=(globdots) # include hidden files
+
+# zsh system completion styles [see zshcompsys(1)]
+zstyle ':completion:*' menu select
+zstyle ':completion:*' completer _complete _match _approximate
+zstyle ':completion:*:approximate:*' max-errors 1 numeric # approximate up to 1 error
+zstyle ':completion:*' use-cache on # speed up some command completions
+zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/cache"
+zstyle ':completion:*:functions' ignored-patterns '_*' # ignore for unavailable commands
+zstyle ':completion:*:default' list-colors "${(s.:.)LS_COLORS}" # uses LS_COLORS for menu
+zstyle ':completion:*:*:*:*:descriptions' format '%F{033}✽ %d ✽%f'
+zstyle ':completion:*:warnings' format ' %F{162}✻ no matches found ✻%f'
+zstyle ':completion:*' group-name '' # group completions their group name
+zstyle ':completion:*:*:-command-:*:*' \
+  group-order alias builtins functions commands  # order for display of the groups defined
+zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' \
+  'l:|=* r:|=*'  # case insensitive and partial substring match completion
+zstyle ':completion:*' squeeze-slashes true # expand wild cards between slashes
+zstyle ':completion:*:messages' format ' %F{purple} -- %d --%f'
+
+compinit -d "$XDG_DATA_HOME/zsh/zcompdump" # speed up the running of compinit
+
+# source my configuration files
+[ -d "$HOME/.config/zsh/config" ] &&
+  for c in "$HOME"/.config/zsh/config/*; do [ -f "$c" ] && source "$c"; done && unset c
+
+### PLUGINS ###
+
+plugins=(
+  'zsh-users/zsh-autosuggestions'
+  'zsh-users/zsh-syntax-highlighting'
+  # 'zdharma-continuum/fast-syntax-highlighting'
+)
+
+# autosuggestion (https://github.com/zsh-users/zsh-autosuggestions)
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#818384'
+
+# plugins must be sourced last
+pdir="$HOME/.local/share/zsh/plugins"
+for p in "$plugins[@]"; do
+  pname=${p##*/} && [ ! -d "$pdir/$pname" ] && mkdir -p "$pdir" &&
+    git -C "$pdir" clone --depth 1 --no-tags "https://github.com/$p.git"
+  [ -f "$pdir/$pname/$pname.plugin.zsh" ] && source "$pdir/$pname/$pname.plugin.zsh"
+done && unset p pdir pname plugins
+
+# For more plugins: https://github.com/unixorn/awesome-zsh-plugins
+# More completions https://github.com/zsh-users/zsh-completions

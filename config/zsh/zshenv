@@ -1,0 +1,59 @@
+#!/usr/bin/sh
+
+# Inteded for export of environment variables only.
+# XDG_CACHE_HOME is where user-specific non-essential (log) data should be written (analogous to /var/cache).
+# XDG_CONFIG_HOME is where user-specific configuration should be written (analogous to /etc).
+# XDG_DATA_HOME is where user-specific data files should be written (analogous to /var/share).
+
+# xdg paths
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+
+# add directories with executable files to the path
+export PATH="$PATH:$HOME/.local/bin"
+
+# locale variables
+export LANG='en_US.UTF-8'
+export LC_TIME='ja_JP.UTF-8'
+export LANGUAGE='en_US.UTF-8'
+export LC_COLLATE='C'
+
+# Set default application for each of the following:
+export EDITOR='nvim'
+export TERMINAL='st'
+export BROWSER="LC_CTYPE=$LC_TIME brave"
+export PAGER='bat'
+
+export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
+
+# X variables
+export XINITRC="$XDG_CONFIG_HOME/x11/xinitrc"
+export XAUTHORITY="$XDG_CONFIG_HOME/x11/xauthority"
+
+export GNUPGHOME="$XDG_DATA_HOME/gnupg"
+
+# HISTFILES are data files
+export HISTSIZE=10000 # maximum events for internal history
+export SAVEHIST=10000 # maximum events in history file
+export HISTCONTROL=:ignorespace
+export HISTFILE="$XDG_DATA_HOME/zsh/zhistory" # history filepath
+
+export CALCHISTFILE="$XDG_DATA_HOME/calc/history"
+
+export LESSHISTFILE='-' # prevents man from generating a .lesshst file in $HOME
+
+export QT_QPA_PLATFORMTHEME='qt5ct' # could be set to gtk3 or gtk2, or qt5ct
+export QT_AUTO_SCREEN_SCALE_FACTOR=0
+export GTK2_RC_FILES="$XDG_CONFIG_HOME/gtk-3.0/gtkrc-2.0"
+export GTK_OVERLAY_SCROLLING=0 # disable auto-hidden scroll bars
+
+export PYTHONDONTWRITEBYTECODE=1 # don't generate __pycache__
+
+export GTK_IM_MODULE='fcitx'
+export QT_IM_MODULE='fcitx'
+export XMODIFIERS='@im=fcitx'
+
+export CARGO_HOME="$XDG_DATA_HOME/cargo"
+
+export _JAVA_AWT_WM_NONREPARENTING=1 # fix misbehaving for Java application
